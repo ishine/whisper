@@ -187,6 +187,55 @@ decoded = processor.batch_decode(result, skip_special_tokens=True)
 
 ```
 
+## batch inference
+```python
+## Batch transcriptions of Audio files 
+
+Below is an implementation for transcribing multiple audio files in parallel.
+
+```bash
+
+import whisper
+
+model = whisper.load_model("medium")
+
+
+import time
+import torch
+
+audios_path=['audio1.wav','audio2.wav',...]
+
+s=time.monotonic()
+audios=[]
+
+# Load, pad/trim, convert to tensor, and append each audio for inference
+for audio in audios_path:
+
+    aud = whisper.load_audio(audio)
+    aud=whisper.pad_or_trim(aud)
+
+    aud=torch.from_numpy(aud)
+    audios.append(aud)
+
+#Stack all audio tensors into a single batch tensor
+mels=torch.stack(audios)
+
+# make log-Mel spectrogram and move to the same device as the model
+mels=whisper.log_mel_spectrogram(mels, n_mels=model.dims.n_mels).to(model.device)
+
+# decode the audio
+options = whisper.DecodingOptions()
+result = whisper.decode(model, mels, options)
+
+# print the recognized text
+for text in result:
+    print(text.text)
+
+e=time.monotonic()
+print("time",e-s)
+
+```
+
 ## License
 
 Whisper's code and model weights are released under the MIT License. See [LICENSE](https://github.com/openai/whisper/blob/main/LICENSE) for further details.
