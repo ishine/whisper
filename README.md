@@ -236,6 +236,10 @@ print("time",e-s)
 
 ```
 
+## others
+https://github.com/urroxyz/whisper
+https://huggingface.co/jordand/whisper-d-v1a
+
 ## License
 
 Whisper's code and model weights are released under the MIT License. See [LICENSE](https://github.com/openai/whisper/blob/main/LICENSE) for further details.
