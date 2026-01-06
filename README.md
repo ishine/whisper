@@ -154,6 +154,38 @@ print(result.text)
 
 Please use the [🙌 Show and tell](https://github.com/openai/whisper/discussions/categories/show-and-tell) category in Discussions for sharing more example usages of Whisper and third-party extensions such as web demos, integrations with other tools, ports for different platforms, etc.
 
+## transformer huggingface batch inference
+```python
+# https://github.com/openai/whisper/discussions/662
+import torchaudio 
+from transformers import WhisperForConditionalGeneration, AutoProcessor
+from datasets import load_dataset, Audio
+import numpy as np
+import torch
+import time
+import whisper
+
+# Assuming files is the list of audio files
+files = ["audio1.mp3", "audio2.mp3", "audio3.mp3", "audio4.mp3", "audio5.mp3"]
+
+ds = load_dataset("/path/to/files/", data_files=files)["train"]
+ds = ds.cast_column("audio", Audio(sampling_rate=16000))
+
+raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
+
+processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
+inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
+inputs = inputs.to("cuda", torch.float16)
+
+model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
+model_medium.to("cuda")
+
+# activate `temperature_fallback` and repetition detection filters and condition on prev text
+result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
+
+decoded = processor.batch_decode(result, skip_special_tokens=True)
+
+```
 
 ## License
 
